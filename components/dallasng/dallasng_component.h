@@ -5,7 +5,8 @@
 #include "esphome/core/hal.h"
 
 #include "OneWireNg.h"
-#include "OneWireNg_CurrentPlatform.h"
+#include "OneWireNg_BitBang.h"
+#include "OneWireNg_LibreTiny.h"
 #include "drivers/DSTherm.h"
 
 namespace esphome
@@ -18,11 +19,7 @@ namespace esphome
     class DallasNgComponent : public PollingComponent
     {
     public:
-      void set_pin(InternalGPIOPin *pin)
-      {
-        pin_ = pin;
-        one_wire_ = new OneWireNg_CurrentPlatform(pin->get_pin(), false);
-      }
+      void set_pin(InternalGPIOPin *pin);
 
       void setup() override;
       void dump_config() override;
@@ -37,7 +34,7 @@ namespace esphome
     protected:
       friend DallasNgTemperatureSensor;
       InternalGPIOPin *pin_;
-      OneWireNg *one_wire_;
+      OneWireNg_LibreTiny *one_wire_;
       std::vector<uint64_t> found_sensors_;
       std::vector<DallasNgTemperatureSensor *> sensors_;
     };

@@ -7,18 +7,26 @@ namespace esphome
   namespace dallasng
   {
 
+    static const char *const TAG_COMPONENT = "dallasng.component";
+
+    void DallasNgComponent::set_pin(InternalGPIOPin *pin)
+    {
+      pin_ = pin;
+      one_wire_ = new OneWireNg_LibreTiny(pin->get_pin(), false);
+    }
+
     void DallasNgComponent::setup()
     {
-      ESP_LOGCONFIG(TAG, "Setting up DallasComponent...");
+      ESP_LOGCONFIG(TAG_COMPONENT, "Setting up DallasComponent...");
       one_wire_->searchReset();
-      ESP_LOGI(TAG, "One wire using pin %d", pin_->get_pin());
+      ESP_LOGI(TAG_COMPONENT, "One wire using pin %d", pin_->get_pin());
       OneWireNg::Id id;
       one_wire_->searchReset();
       while (one_wire_->search(id, false) == OneWireNg::EC_MORE)
       {
         uint64_t address;
         memcpy(&address, &id[0], sizeof(address));
-        ESP_LOGI(TAG, "Found dallas device 0x%s", format_hex(address).c_str());
+        ESP_LOGI(TAG_COMPONENT, "Found dallas device 0x%s", format_hex(address).c_str());
         this->found_sensors_.push_back(address);
       }
 
@@ -29,12 +37,12 @@ namespace esphome
           auto index = *sensor->get_index();
           if (index > found_sensors_.size())
           {
-            ESP_LOGW(TAG, "Index %d higher than the number of sensors (%d)", index, found_sensors_.size());
+            ESP_LOGW(TAG_COMPONENT, "Index %d higher than the number of sensors (%d)", index, found_sensors_.size());
             status_set_error();
             continue;
           }
           auto address = found_sensors_[index];
-          ESP_LOGI(TAG, "Sensor index %d has address 0x%s", index, format_hex(address).c_str());
+          ESP_LOGI(TAG_COMPONENT, "Sensor index %d has address 0x%s", index, format_hex(address).c_str());
           sensor->set_address(address);
         }
 
@@ -47,20 +55,20 @@ namespace esphome
 
     void DallasNgComponent::dump_config()
     {
-      ESP_LOGCONFIG(TAG, "DallasComponent:");
+      ESP_LOGCONFIG(TAG_COMPONENT, "DallasComponent:");
       LOG_PIN("  Pin: ", this->pin_);
       LOG_UPDATE_INTERVAL(this);
 
       if (this->found_sensors_.empty())
       {
-        ESP_LOGW(TAG, "  Found no sensors!");
+        ESP_LOGW(TAG_COMPONENT, "  Found no sensors!");
       }
       else
       {
-        ESP_LOGD(TAG, "  Found sensors:");
+        ESP_LOGD(TAG_COMPONENT, "  Found sensors:");
         for (auto &address : this->found_sensors_)
         {
-          ESP_LOGD(TAG, "    0x%s", format_hex(address).c_str());
+          ESP_LOGD(TAG_COMPONENT, "    0x%s", format_hex(address).c_str());
         }
       }
 
@@ -69,15 +77,15 @@ namespace esphome
         LOG_SENSOR("  ", "Device", sensor);
         if (sensor->get_index().has_value())
         {
-          ESP_LOGCONFIG(TAG, "    Index %u", *sensor->get_index());
+          ESP_LOGCONFIG(TAG_COMPONENT, "    Index %u", *sensor->get_index());
           if (*sensor->get_index() >= this->found_sensors_.size())
           {
-            ESP_LOGE(TAG, "Couldn't find sensor by index - not connected. Proceeding without it.");
+            ESP_LOGE(TAG_COMPONENT, "Couldn't find sensor by index - not connected. Proceeding without it.");
             continue;
           }
         }
-        ESP_LOGCONFIG(TAG, "    Address: %s", sensor->get_address_name().c_str());
-        ESP_LOGCONFIG(TAG, "    Resolution: %u", sensor->get_resolution());
+        ESP_LOGCONFIG(TAG_COMPONENT, "    Address: %s", sensor->get_address_name().c_str());
+        ESP_LOGCONFIG(TAG_COMPONENT, "    Resolution: %u", sensor->get_resolution());
       }
     }
 
@@ -87,7 +95,7 @@ namespace esphome
       OneWireNg::ErrorCode result = one_wire_->reset();
       if (result != OneWireNg::EC_SUCCESS)
       {
-        ESP_LOGE(TAG, "Failed to reset the bus: %d", result);
+        ESP_LOGE(TAG_COMPONENT, "Failed to reset the bus: %d", result);
         status_set_warning();
 
         for (auto *sensor : sensors_)
