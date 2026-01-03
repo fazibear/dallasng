@@ -4,6 +4,7 @@
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/core/hal.h"
 
+#include "OneWireNg.h"
 #include "OneWireNg_CurrentPlatform.h"
 #include "drivers/DSTherm.h"
 
